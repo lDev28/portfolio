@@ -1,0 +1,51 @@
+name: Deploy Next.js App
+
+on:
+   push:
+      branches:
+         - master
+
+jobs:
+   build:
+      name: Build
+      runs-on: ubuntu-latest
+
+      steps:
+         - name: Checkout repository
+           uses: actions/checkout@v2
+
+         - name: Set up Node.js
+           uses: actions/setup-node@v2
+           with:
+              node-version: 14
+
+         - name: Install dependencies
+           run: npm install
+
+         - name: Build Next.js app
+           run: npm run build
+
+         - name: Save artifacts
+           uses: actions/upload-artifact@v2
+           with:
+              name: next-app-files
+              path: .out
+
+   deploy:
+      name: Deploy
+      needs: build
+      runs-on: ubuntu-latest
+      if: github.ref == 'refs/heads/master'
+
+      steps:
+         - name: Download artifact
+           uses: actions/download-artifact@v2
+           with:
+              name: next-app-files
+              path: ./out
+
+         - name: Deploy to GitHub Pages
+           uses: peaceiris/actions-gh-pages@v3
+           with:
+              github_token: ${{ secrets.GITHUB_TOKEN }}
+              publish_dir: ./out
